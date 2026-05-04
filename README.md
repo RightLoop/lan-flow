@@ -4,6 +4,8 @@
 
 Lan Flow is a single-binary, zero-dependency Windows background service. Start it on your computer, and **any device on the same LAN** (phone, tablet, another PC) can upload/download files and share text messages through a browser. No app installs, no accounts, no cloud needed.
 
+[中文版说明](README_cn.md)
+
 ---
 
 ## Quick Start
@@ -152,5 +154,3 @@ See [BASELINE.md](BASELINE.md) for the full development plan.
 MIT
 
 ---
-
-[中文版说明](README_cn.md)
