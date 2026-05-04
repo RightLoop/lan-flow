@@ -48,7 +48,7 @@ func checkLock(cfg Config) error {
 	return fmt.Errorf(
 		"cannot start: another Lan Trans instance is already running on port %d\n"+
 			"  Lock file: %s\n"+
-			"  Run 'lan-flow status' to check the running instance",
+			"  Run 'lan-flow.exe status' to check the running instance",
 		port, path)
 }
 

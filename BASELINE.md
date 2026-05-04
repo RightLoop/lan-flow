@@ -61,10 +61,10 @@ There is no authentication in the first version because the tool is intended for
 ## Commands
 
 ```text
-lan-flow serve
-lan-flow status
-lan-flow install-startup
-lan-flow uninstall-startup
+lan-flow.exe serve
+lan-flow.exe status
+lan-flow.exe install-startup
+lan-flow.exe uninstall-startup
 ```
 
 ## API

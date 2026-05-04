@@ -1,20 +1,20 @@
-# Lan Flow — 局域网文件流转
+# Lan Flow — LAN File Flow
 
-> 极轻量的局域网文件共享工具，打开浏览器就能用。
+> Lightweight LAN file sharing — open a browser and go.
 
-Lan Flow 是一个单文件、零依赖的 Windows 后台服务。在电脑上跑起来后，**同一局域网内的任何设备**（手机、平板、其他电脑）打开浏览器就能上传/下载文件、分享文字消息。不需要装任何 App，不需要登录账号，不需要云服务中转。
+Lan Flow is a single-binary, zero-dependency Windows background service. Start it on your computer, and **any device on the same LAN** (phone, tablet, another PC) can upload/download files and share text messages through a browser. No app installs, no accounts, no cloud needed.
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 运行
+### Run
 
 ```powershell
-lan-flow serve
+.\lan-flow.exe serve
 ```
 
-终端会打印出几个地址，像这样：
+The terminal prints addresses like:
 
 ```
 Lan Flow listening on 0.0.0.0:8787
@@ -23,99 +23,99 @@ URL: http://172.20.0.100:8787
 URL: http://127.0.0.1:8787
 ```
 
-拿其他设备的浏览器打开 `http://192.168.1.100:8787`（以你终端里实际打印的为准），就能看到页面了。
+Open `http://192.168.1.100:8787` (use whatever your terminal shows) on another device's browser.
 
-### 查看状态
-
-```powershell
-lan-flow status
-```
-
-### 安装开机自启
+### Check status
 
 ```powershell
-lan-flow install-startup
+.\lan-flow.exe status
 ```
 
-之后每次登录 Windows 都会在后台自动启动，没有弹窗。
-
-### 移除开机自启
+### Auto-start on login
 
 ```powershell
-lan-flow uninstall-startup
+.\lan-flow.exe install-startup
+```
+
+The service starts silently in the background every time you log in.
+
+### Remove auto-start
+
+```powershell
+.\lan-flow.exe uninstall-startup
 ```
 
 ---
 
-## 使用场景
+## Use Cases
 
-| 场景 | 说明 |
-|------|------|
-| 📁 传文件给隔壁工位的同事 | 拖拽上传，对方浏览器下载，不用 U 盘不用微信 |
-| 📝 分享一段文本/链接/代码 | 粘贴到消息框，对方直接复制 |
-| 📱 手机和电脑互传 | 手机浏览器打开地址就能操作，不用数据线 |
-| 🏠 家里设备互传 | Windows 台式机跑服务，笔记本/iPad/手机都能访问 |
+| Scenario | How |
+|----------|-----|
+| 📁 Send a file to a coworker | Drag to upload, they download in browser — no USB, no WeChat |
+| 📝 Share a snippet / link / code | Paste into the message box, others copy it instantly |
+| 📱 Phone ↔ PC transfer | Open the address on your phone's browser, no cable needed |
+| 🏠 Home devices | Run the server on your Windows desktop, access from laptop / iPad / phone |
 
 ---
 
-## 数据目录
+## Data Directory
 
-默认数据存储在 `%LOCALAPPDATA%\LanFlow`，里面包含：
+Files are stored in `%LOCALAPPDATA%\LanFlow`:
 
 ```
-config.json     配置（端口、访问白名单等）
-runtime.json    当前运行状态
-metadata.json   文件记录
-messages.json   消息记录
-files/          上传的文件
+config.json     Configuration (port, CIDR whitelist, etc.)
+runtime.json    Current runtime info
+metadata.json   File index
+messages.json   Message history
+files/          Uploaded files
 ```
 
-上传的文件默认保留 **24 小时**后自动清理。
+Uploads are **automatically cleaned up after 24 hours**.
 
 ---
 
-## 安全说明
+## Security Notes
 
-- **没有密码**（设计给可信局域网用的）
-- **自动限制访问范围** — 只允许本机和私有网段（`10.x.x.x`、`172.16-31.x.x`、`192.168.x.x`）访问
-- **端口回退** — 默认 `8787`，被占用时自动尝试后续端口直到 `8807`
-- **实例互斥** — 同目录下只会有一个实例在运行，第二次启动会自动检测并提示
-- ⚠️ **不要直接暴露到公网**
-
----
-
-## 技术参数
-
-| 项目 | 值 |
-|------|-----|
-| 运行环境 | Windows （Go 实现，单 exe） |
-| 默认端口 | 8787（端口范围 8787-8807） |
-| 单文件上限 | 2048 MB |
-| 消息长度上限 | 64 KB |
-| 保留时间 | 24 小时（过期自动清理） |
-| 界面 | 浏览器 Web 页面 |
+- **No password** (designed for trusted LANs only)
+- **IP-restricted by default** — only localhost and private ranges (`10.x.x.x`, `172.16-31.x.x`, `192.168.x.x`)
+- **Port fallback** — tries `8787` first, walks up to `8807` if busy
+- **Single-instance guard** — won't start a second copy if one is already running
+- ⚠️ **Do not expose directly to the internet**
 
 ---
 
-## API 概览
+## Specs
+
+| Item | Value |
+|------|-------|
+| Platform | Windows (Go, single exe) |
+| Default port | 8787 (range 8787–8807) |
+| Max file size | 2048 MB |
+| Max message length | 64 KB |
+| Retention | 24 hours (auto-cleanup) |
+| UI | Web browser |
+
+---
+
+## API Overview
 
 ```
-GET    /                  Web 页面
-GET    /api/health        服务状态
-GET    /api/items         所有文件和消息
-POST   /api/files         上传文件
-GET    /api/files/{id}    下载文件
-DELETE /api/files/{id}    删除文件
-POST   /api/messages      发送消息
-GET    /api/messages      消息列表
-DELETE /api/messages/{id} 删除消息
+GET    /                  Web UI
+GET    /api/health        Health check
+GET    /api/items         All files and messages
+POST   /api/files         Upload a file
+GET    /api/files/{id}    Download a file
+DELETE /api/files/{id}    Delete a file
+POST   /api/messages      Send a message
+GET    /api/messages      List messages
+DELETE /api/messages/{id} Delete a message
 ```
 
 ---
 
-## 从源码构建
+## Build from Source
 
-需要 Go 1.22+：
+Requires Go 1.22+:
 
 ```powershell
 go build -o lan-flow.exe .
@@ -123,12 +123,16 @@ go build -o lan-flow.exe .
 
 ---
 
-## 开发基线
+## Design Docs
 
-完整的设计文档和开发规划见 [BASELINE.md](BASELINE.md)。
+See [BASELINE.md](BASELINE.md) for the full development plan.
 
 ---
 
-## 许可
+## License
 
 MIT
+
+---
+
+[中文版说明](README_cn.md)

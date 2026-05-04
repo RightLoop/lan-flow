@@ -38,7 +38,7 @@ func main() {
 		fmt.Println("Lan Trans startup task removed.")
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
-		fmt.Fprintln(os.Stderr, "usage: lan-flow [serve|status|install-startup|uninstall-startup]")
+		fmt.Fprintln(os.Stderr, "usage: lan-flow.exe [serve|status|install-startup|uninstall-startup]")
 		os.Exit(2)
 	}
 }
