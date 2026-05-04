@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lan Trans</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <h1>Lan Trans</h1>
+        <p id="addressLine">加载访问地址中...</p>
+      </div>
+      <button id="refreshBtn" type="button">刷新</button>
+    </header>
+
+    <section class="panel">
+      <h2>文件</h2>
+      <form id="uploadForm" class="upload-row">
+        <input id="fileInput" name="file" type="file" required>
+        <button type="submit">上传</button>
+      </form>
+      <div id="uploadState" class="state"></div>
+      <div id="files" class="list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>消息</h2>
+      <form id="messageForm" class="message-form">
+        <textarea id="messageText" rows="4" maxlength="65536" placeholder="输入要在内网共享的文本、链接或备注"></textarea>
+        <button type="submit">发送</button>
+      </form>
+      <div id="messages" class="list"></div>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,7 @@
+lan-trans.exe
+*.exe
+*.log
+dist/
+build/
+.codex
+
