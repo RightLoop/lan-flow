@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-const startupTaskName = "LanTrans"
+const startupTaskName = "LanFlow"
 
 func installStartup() error {
 	exe, err := os.Executable()

@@ -1,94 +1,134 @@
-# Lan Trans
+# Lan Flow — 局域网文件流转
 
-Lan Trans is a lightweight Windows LAN transfer tool. It runs a small background HTTP service and exposes a browser page for devices on the same local network to share files and text messages.
+> 极轻量的局域网文件共享工具，打开浏览器就能用。
 
-## Features
+Lan Flow 是一个单文件、零依赖的 Windows 后台服务。在电脑上跑起来后，**同一局域网内的任何设备**（手机、平板、其他电脑）打开浏览器就能上传/下载文件、分享文字消息。不需要装任何 App，不需要登录账号，不需要云服务中转。
 
-- Browser-only UI
-- File upload, download, and deletion
-- Text message sharing
-- Automatic cleanup after 24 hours
-- Default LAN-only access boundary
-- Preferred port `8787` with fallback through `8807`
-- Windows startup task install/uninstall
-- No database and no external runtime
+---
 
-## Build
+## 快速开始
 
-Install Go 1.22 or newer, then run:
+### 运行
 
 ```powershell
-go build -o lan-trans.exe .
+lan-flow serve
 ```
 
-## Run
+终端会打印出几个地址，像这样：
+
+```
+Lan Flow listening on 0.0.0.0:8787
+URL: http://192.168.1.100:8787
+URL: http://172.20.0.100:8787
+URL: http://127.0.0.1:8787
+```
+
+拿其他设备的浏览器打开 `http://192.168.1.100:8787`（以你终端里实际打印的为准），就能看到页面了。
+
+### 查看状态
 
 ```powershell
-.\lan-trans.exe serve
+lan-flow status
 ```
 
-Open one of the URLs printed by the program, usually:
-
-```text
-http://<your-pc-lan-ip>:8787
-```
-
-Other devices on the same LAN can open that URL in a browser.
-
-On first run, Windows Defender Firewall may ask whether to allow private network access. Allow private network access if you want phones or other computers on the LAN to connect.
-
-## Commands
+### 安装开机自启
 
 ```powershell
-.\lan-trans.exe serve
-.\lan-trans.exe status
-.\lan-trans.exe install-startup
-.\lan-trans.exe uninstall-startup
+lan-flow install-startup
 ```
 
-`install-startup` creates a Windows scheduled task named `LanTrans` that starts the server when you log in.
-The startup task launches the server through PowerShell with a hidden window so it can run quietly in the background.
+之后每次登录 Windows 都会在后台自动启动，没有弹窗。
 
-## Data Directory
+### 移除开机自启
 
-By default, files and metadata are stored in:
-
-```text
-%LOCALAPPDATA%\LanTrans
+```powershell
+lan-flow uninstall-startup
 ```
 
-The directory contains:
+---
 
-```text
-config.json
-runtime.json
-metadata.json
-messages.json
-files\
+## 使用场景
+
+| 场景 | 说明 |
+|------|------|
+| 📁 传文件给隔壁工位的同事 | 拖拽上传，对方浏览器下载，不用 U 盘不用微信 |
+| 📝 分享一段文本/链接/代码 | 粘贴到消息框，对方直接复制 |
+| 📱 手机和电脑互传 | 手机浏览器打开地址就能操作，不用数据线 |
+| 🏠 家里设备互传 | Windows 台式机跑服务，笔记本/iPad/手机都能访问 |
+
+---
+
+## 数据目录
+
+默认数据存储在 `%LOCALAPPDATA%\LanFlow`，里面包含：
+
+```
+config.json     配置（端口、访问白名单等）
+runtime.json    当前运行状态
+metadata.json   文件记录
+messages.json   消息记录
+files/          上传的文件
 ```
 
-## Configuration
+上传的文件默认保留 **24 小时**后自动清理。
 
-The default `config.json` is created on first run:
+---
 
-```json
-{
-  "listenHost": "0.0.0.0",
-  "preferredPort": 8787,
-  "portFallbackEnd": 8807,
-  "retentionHours": 24,
-  "cleanupIntervalMinutes": 10,
-  "maxUploadMB": 2048,
-  "allowCIDRs": [
-    "127.0.0.1/32",
-    "::1/128",
-    "10.0.0.0/8",
-    "172.16.0.0/12",
-    "192.168.0.0/16"
-  ]
-}
+## 安全说明
+
+- **没有密码**（设计给可信局域网用的）
+- **自动限制访问范围** — 只允许本机和私有网段（`10.x.x.x`、`172.16-31.x.x`、`192.168.x.x`）访问
+- **端口回退** — 默认 `8787`，被占用时自动尝试后续端口直到 `8807`
+- **实例互斥** — 同目录下只会有一个实例在运行，第二次启动会自动检测并提示
+- ⚠️ **不要直接暴露到公网**
+
+---
+
+## 技术参数
+
+| 项目 | 值 |
+|------|-----|
+| 运行环境 | Windows （Go 实现，单 exe） |
+| 默认端口 | 8787（端口范围 8787-8807） |
+| 单文件上限 | 2048 MB |
+| 消息长度上限 | 64 KB |
+| 保留时间 | 24 小时（过期自动清理） |
+| 界面 | 浏览器 Web 页面 |
+
+---
+
+## API 概览
+
+```
+GET    /                  Web 页面
+GET    /api/health        服务状态
+GET    /api/items         所有文件和消息
+POST   /api/files         上传文件
+GET    /api/files/{id}    下载文件
+DELETE /api/files/{id}    删除文件
+POST   /api/messages      发送消息
+GET    /api/messages      消息列表
+DELETE /api/messages/{id} 删除消息
 ```
 
-## Notes
+---
 
-Lan Trans intentionally has no password in the first version. It is designed for trusted private LAN use and rejects requests outside local/private address ranges.
+## 从源码构建
+
+需要 Go 1.22+：
+
+```powershell
+go build -o lan-flow.exe .
+```
+
+---
+
+## 开发基线
+
+完整的设计文档和开发规划见 [BASELINE.md](BASELINE.md)。
+
+---
+
+## 许可
+
+MIT

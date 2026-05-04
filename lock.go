@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const lockFilename = "lan-trans.lock"
+const lockFilename = "lan-flow.lock"
 
 func lockPath(cfg Config) string {
 	return filepath.Join(cfg.DataDir, lockFilename)
@@ -48,7 +48,7 @@ func checkLock(cfg Config) error {
 	return fmt.Errorf(
 		"cannot start: another Lan Trans instance is already running on port %d\n"+
 			"  Lock file: %s\n"+
-			"  Run 'lan-trans.exe status' to check the running instance",
+			"  Run 'lan-flow status' to check the running instance",
 		port, path)
 }
 

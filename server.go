@@ -47,7 +47,7 @@ func Serve(cfg Config, store *Store) error {
 		return err
 	}
 
-	log.Printf("Lan Trans listening on %s:%d", cfg.ListenHost, port)
+	log.Printf("Lan Flow listening on %s:%d", cfg.ListenHost, port)
 	for _, url := range urls {
 		log.Printf("URL: %s", url)
 	}

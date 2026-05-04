@@ -1,8 +1,8 @@
-# Lan Trans Development Baseline
+# Lan Flow Development Baseline
 
 ## Goal
 
-Lan Trans is a lightweight Windows background program that exposes a local network web page for peer-style file and message transfer between devices on the same LAN.
+Lan Flow is a lightweight Windows background program that exposes a local network web page for peer-style file and message transfer between devices on the same LAN.
 
 ## Platform And Runtime
 
@@ -15,7 +15,7 @@ Lan Trans is a lightweight Windows background program that exposes a local netwo
 - Port fallback range: `8787-8807`
 - Default retention: 24 hours
 - Default maximum upload size: 2048 MB
-- Default data directory: `%LOCALAPPDATA%\LanTrans`
+- Default data directory: `%LOCALAPPDATA%\LanFlow`
 
 ## Security Boundary
 
@@ -61,10 +61,10 @@ There is no authentication in the first version because the tool is intended for
 ## Commands
 
 ```text
-lan-trans.exe serve
-lan-trans.exe status
-lan-trans.exe install-startup
-lan-trans.exe uninstall-startup
+lan-flow serve
+lan-flow status
+lan-flow install-startup
+lan-flow uninstall-startup
 ```
 
 ## API

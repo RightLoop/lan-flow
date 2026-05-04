@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-const appName = "LanTrans"
+const appName = "LanFlow"
 
 type Config struct {
 	ListenHost             string   `json:"listenHost"`
