@@ -123,6 +123,24 @@ go build -o lan-flow.exe .
 
 ---
 
+## 常见问题
+
+### 端口变成了 8788 而不是 8787
+
+如果启动后端口不是预期的 8787，说明该端口已被占用。
+
+**常见原因：**
+
+1. **已有实例在运行** — 用 `.\lan-flow.exe status` 检查。如果已在运行，不要重复启动。
+2. **旧版的自启任务残留** — 如果你改了二进制名称或从旧版升级，老的 `LanTrans` 自启任务可能还在后台启动旧程序。重新执行 `.\lan-flow.exe install-startup` 即可——新代码会自动清理旧任务。
+3. **Windows 系统保留了端口范围** — 某些 Windows 配置（尤其是 Hyper-V / WSL2）会保留一段端口范围。用这个命令排查：
+   ```powershell
+   netsh int ipv4 show excludedportrange protocol=tcp
+   ```
+   如果 `8787` 在列表中，可以去 `%LOCALAPPDATA%\LanFlow\config.json` 里修改 `preferredPort` 避开它。
+
+---
+
 ## 开发基线
 
 完整的设计文档和开发规划见 [BASELINE.md](BASELINE.md)。

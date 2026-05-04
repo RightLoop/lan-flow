@@ -10,9 +10,15 @@ import (
 	"strings"
 )
 
-const startupTaskName = "LanFlow"
+const (
+	startupTaskName        = "LanFlow"
+	startupTaskNameLegacy  = "LanTrans" // removed on install if it exists
+)
 
 func installStartup() error {
+	// Clean up legacy startup task from the old name to prevent port conflicts.
+	removeLegacyStartup()
+
 	exe, err := os.Executable()
 	if err != nil {
 		return err
@@ -31,6 +37,16 @@ func installStartup() error {
 		return fmt.Errorf("schtasks create failed: %w: %s", err, string(out))
 	}
 	return nil
+}
+
+func removeLegacyStartup() {
+	cmd := exec.Command("schtasks", "/Delete", "/TN", startupTaskNameLegacy, "/F")
+	if out, err := cmd.CombinedOutput(); err == nil {
+		fmt.Printf("Removed legacy startup task '%s'\n", startupTaskNameLegacy)
+	} else {
+		// silently ignored if the task didn't exist
+		_ = out
+	}
 }
 
 func escapePowerShellSingleQuoted(value string) string {

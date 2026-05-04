@@ -30,12 +30,12 @@ func main() {
 		if err := installStartup(); err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("Lan Trans startup task installed.")
+		fmt.Println("Lan Flow startup task installed.")
 	case "uninstall-startup":
 		if err := uninstallStartup(); err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("Lan Trans startup task removed.")
+		fmt.Println("Lan Flow startup task removed.")
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		fmt.Fprintln(os.Stderr, "usage: lan-flow.exe [serve|status|install-startup|uninstall-startup]")

@@ -123,6 +123,24 @@ go build -o lan-flow.exe .
 
 ---
 
+## Troubleshooting
+
+### Port unexpectedly changed (e.g. 8788 instead of 8787)
+
+If the server starts on a different port than expected, the preferred port (`8787`) is already in use.
+
+**Common causes:**
+
+1. **Another instance is already running** — Check with `.\lan-flow.exe status`. If one is running, don't start a second one.
+2. **Stale startup task from a previous version** — If you renamed the binary or upgraded from an older version, the old startup task (`LanTrans`) may still be launching the old binary. Run `.\lan-flow.exe install-startup` again — it automatically removes the old task.
+3. **Windows reserved port range** — Some Windows configurations (especially Hyper-V / WSL2) reserve ranges of ports. Run this to check:
+   ```powershell
+   netsh int ipv4 show excludedportrange protocol=tcp
+   ```
+   If `8787` is in the list, you can change the preferred port in `%LOCALAPPDATA%\LanFlow\config.json`.
+
+---
+
 ## Design Docs
 
 See [BASELINE.md](BASELINE.md) for the full development plan.
