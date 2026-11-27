@@ -5,17 +5,55 @@ const uploadState = document.querySelector("#uploadState");
 const fileInput = document.querySelector("#fileInput");
 const messageForm = document.querySelector("#messageForm");
 const messageText = document.querySelector("#messageText");
+const messageState = document.querySelector("#messageState");
 const refreshBtn = document.querySelector("#refreshBtn");
 const addressLine = document.querySelector("#addressLine");
 
+let itemsETag;
+let latestItemsRequest = 0;
+let hasLoadedItems = false;
+let pollTimer;
+
 async function api(path, options) {
-  const res = await fetch(path, options);
+  return readResponse(await fetch(path, options));
+}
+
+async function readResponse(res) {
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `HTTP ${res.status}`);
   }
   if (res.status === 204) return null;
   return res.json();
+}
+
+async function copyText(value) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // The browser can deny clipboard access even in a secure context.
+    }
+  }
+
+  const focused = document.activeElement;
+  const field = document.createElement("textarea");
+  field.value = value;
+  field.readOnly = true;
+  field.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;min-height:0;padding:0;border:0;opacity:0;pointer-events:none";
+  document.body.append(field);
+  try {
+    field.focus({ preventScroll: true });
+    field.select();
+    field.setSelectionRange(0, field.value.length);
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    field.remove();
+    focused?.focus({ preventScroll: true });
+  }
 }
 
 function formatBytes(bytes) {
@@ -104,8 +142,13 @@ function renderMessages(messages) {
     const copy = document.createElement("button");
     copy.type = "button";
     copy.textContent = "复制";
+    let copyFeedbackTimer;
     copy.addEventListener("click", async () => {
-      await navigator.clipboard.writeText(message.text);
+      const copied = await copyText(message.text);
+      copy.textContent = copied ? "已复制" : "复制失败";
+      clearTimeout(copyFeedbackTimer);
+      copyFeedbackTimer = setTimeout(() => { copy.textContent = "复制"; }, 1800);
+      messageState.textContent = copied ? "已复制到剪贴板" : "复制失败，请选中消息文本后手动复制";
     });
     const remove = document.createElement("button");
     remove.type = "button";
@@ -129,9 +172,38 @@ async function loadHealth() {
 }
 
 async function loadItems() {
-  const items = await api("/api/items");
+  const request = ++latestItemsRequest;
+  const response = await fetch("/api/items", {
+    headers: itemsETag ? { "If-None-Match": itemsETag } : undefined,
+  });
+  const etag = response.headers.get("ETag");
+  if (response.status === 304 || (response.ok && etag && etag === itemsETag)) return;
+  const items = await readResponse(response);
+  if (request !== latestItemsRequest) return;
   renderFiles(items.files || []);
   renderMessages(items.messages || []);
+  itemsETag = etag;
+  hasLoadedItems = true;
+}
+
+async function refreshItems() {
+  clearTimeout(pollTimer);
+  try {
+    await loadItems();
+  } catch (err) {
+    if (!hasLoadedItems) {
+      filesEl.replaceChildren(empty(`加载失败：${err.message}`));
+      messagesEl.replaceChildren(empty(`加载失败：${err.message}`));
+    }
+  } finally {
+    clearTimeout(pollTimer);
+    if (!document.hidden) pollTimer = setTimeout(refreshItems, 5000);
+  }
+}
+
+function updatePolling() {
+  if (document.hidden) clearTimeout(pollTimer);
+  else refreshItems();
 }
 
 uploadForm.addEventListener("submit", async (event) => {
@@ -163,14 +235,11 @@ messageForm.addEventListener("submit", async (event) => {
   await loadItems();
 });
 
-refreshBtn.addEventListener("click", loadItems);
+refreshBtn.addEventListener("click", refreshItems);
+document.addEventListener("visibilitychange", updatePolling);
 
 loadHealth().catch(() => {
   addressLine.textContent = "访问地址加载失败";
 });
-loadItems().catch((err) => {
-  filesEl.append(empty(`加载失败：${err.message}`));
-  messagesEl.append(empty(`加载失败：${err.message}`));
-});
-setInterval(loadItems, 5000);
+updatePolling();
 

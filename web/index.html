@@ -3,39 +3,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#152844">
   <title>Lan Flow</title>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
-      <div>
-        <h1>Lan Flow</h1>
-        <p id="addressLine">加载访问地址中...</p>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>Lan Flow</h1>
+          <p id="addressLine">正在加载访问地址…</p>
+        </div>
       </div>
-      <button id="refreshBtn" type="button">刷新</button>
+      <button id="refreshBtn" class="refresh" type="button">
+        <span aria-hidden="true">↻</span> 刷新
+      </button>
     </header>
 
-    <section class="panel">
-      <h2>文件</h2>
-      <form id="uploadForm" class="upload-row">
-        <input id="fileInput" name="file" type="file" required>
-        <button type="submit">上传</button>
-      </form>
-      <div id="uploadState" class="state"></div>
-      <div id="files" class="list"></div>
-    </section>
+    <div class="workspace">
+      <section class="panel" aria-labelledby="filesHeading">
+        <header class="panel-heading">
+          <span class="panel-icon file-icon" aria-hidden="true"></span>
+          <h2 id="filesHeading">文件传输</h2>
+        </header>
+        <form id="uploadForm" class="composer">
+          <input id="fileInput" name="file" type="file" aria-label="选择要上传的文件" required>
+          <button type="submit">上传文件</button>
+        </form>
+        <p id="uploadState" class="state" role="status"></p>
+        <div id="files" class="list"></div>
+      </section>
 
-    <section class="panel">
-      <h2>消息</h2>
-      <form id="messageForm" class="message-form">
-        <textarea id="messageText" rows="4" maxlength="65536" placeholder="输入要在内网共享的文本、链接或备注"></textarea>
-        <button type="submit">发送</button>
-      </form>
-      <div id="messages" class="list"></div>
-    </section>
+      <section class="panel" aria-labelledby="messagesHeading">
+        <header class="panel-heading">
+          <span class="panel-icon message-icon" aria-hidden="true"></span>
+          <h2 id="messagesHeading">文本消息</h2>
+        </header>
+        <form id="messageForm" class="composer">
+          <textarea id="messageText" rows="3" maxlength="65536" aria-label="消息内容" placeholder="输入要共享的文本、链接或备注"></textarea>
+          <button type="submit">发送消息</button>
+        </form>
+        <p id="messageState" class="state" role="status"></p>
+        <div id="messages" class="list"></div>
+      </section>
+    </div>
   </main>
   <script src="/app.js"></script>
 </body>
 </html>
-

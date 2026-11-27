@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/fs"
 	"log"
 	"mime"
 	"mime/multipart"
@@ -53,7 +52,11 @@ func Serve(cfg Config, store *Store) error {
 	}
 
 	// Use an explicit http.Server so we can shut down gracefully on Ctrl+C.
-	srv := &http.Server{Handler: handler}
+	srv := &http.Server{
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       30 * time.Second,
+	}
 	go handleShutdownSignal(srv)
 
 	err = srv.Serve(listener)
@@ -105,10 +108,18 @@ func routes(cfg Config, store *Store, runtime RuntimeInfo) http.Handler {
 		})
 	})
 	mux.HandleFunc("GET /api/items", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, store.Items())
+		items, etag := store.itemsSnapshot()
+		w.Header().Set("ETag", etag)
+		w.Header().Set("Cache-Control", "private, no-cache")
+		if matchesETag(r.Header.Values("If-None-Match"), etag) {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		writeJSON(w, items)
 	})
 	mux.HandleFunc("GET /api/messages", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, store.Items().Messages)
+		items, _ := store.itemsSnapshot()
+		writeJSON(w, items.Messages)
 	})
 	mux.HandleFunc("POST /api/messages", func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -126,7 +137,12 @@ func routes(cfg Config, store *Store, runtime RuntimeInfo) http.Handler {
 		writeJSON(w, item)
 	})
 	mux.HandleFunc("DELETE /api/messages/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if !store.DeleteMessage(r.PathValue("id")) {
+		found, err := store.DeleteMessage(r.PathValue("id"))
+		if err != nil {
+			http.Error(w, "could not delete message", http.StatusInternalServerError)
+			return
+		}
+		if !found {
 			http.NotFound(w, r)
 			return
 		}
@@ -171,16 +187,48 @@ func routes(cfg Config, store *Store, runtime RuntimeInfo) http.Handler {
 		http.ServeFile(w, r, filePath)
 	})
 	mux.HandleFunc("DELETE /api/files/{id}", func(w http.ResponseWriter, r *http.Request) {
-		if !store.DeleteFile(r.PathValue("id")) {
+		found, err := store.DeleteFile(r.PathValue("id"))
+		if err != nil {
+			http.Error(w, "could not delete file", http.StatusInternalServerError)
+			return
+		}
+		if !found {
 			http.NotFound(w, r)
 			return
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	static, _ := fs.Sub(webFS, "web")
-	mux.Handle("/", http.FileServer(http.FS(static)))
+	mux.Handle("/", webHandler())
 	return mux
+}
+
+func matchesETag(headers []string, etag string) bool {
+	for _, header := range headers {
+		for {
+			header = strings.TrimLeft(header, " \t,")
+			if strings.TrimRight(header, " \t") == "*" {
+				return true
+			}
+			header = strings.TrimPrefix(header, "W/")
+			if !strings.HasPrefix(header, `"`) {
+				break
+			}
+			end := strings.IndexByte(header[1:], '"')
+			if end == -1 {
+				break
+			}
+			tag := header[:end+2]
+			header = strings.TrimLeft(header[end+2:], " \t")
+			if header != "" && header[0] != ',' {
+				break
+			}
+			if tag == etag {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
